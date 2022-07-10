@@ -26,9 +26,7 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="submitForm(ruleFormRef)"
-            >登录</el-button
-          >
+          <el-button type="primary" @click="handleLoginSubmit">登录</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -36,11 +34,44 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
+import { useStore } from 'vuex'
+
+const store = useStore()
+
+const ruleFormRef = ref(null)
 const ruleForm = reactive({
   userName: '',
   userPwd: ''
 })
+
+const rules = {
+  userName: [
+    {
+      required: true,
+      message: '请输入用户名',
+      trigger: 'blur'
+    }
+  ],
+  userPwd: [
+    {
+      required: true,
+      message: '请输入密码',
+      trigger: 'blur'
+    }
+  ]
+}
+
+const handleLoginSubmit = () => {
+  ruleFormRef.value.validate(async (valid) => {
+    if (valid) {
+      store.dispatch('user/UserApi')
+    } else {
+      console.log('error submit!!')
+      return false
+    }
+  })
+}
 </script>
 
 <style lang="scss" scoped>
