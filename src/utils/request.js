@@ -1,39 +1,46 @@
 import axios from 'axios'
-import { Promise } from 'core-js'
-import { ElMessage } from 'element-plus'
+import store from '../store'
 
-const instance = axios.create({
-  baseURL: process.env.VUE_APP_SERVICE_URL,
+const service = axios.create({
+  baseURL: process.env.VUE_APP_BASE_API,
   timeout: 5000
 })
 
-// 添加请求拦截器
-instance.interceptors.request.use(
-  function (config) {
-    // 在发送请求之前做些什么
-    config.headers.Authorization = localStorage.getItem('token')
+// 请求拦截器
+service.interceptors.request.use(
+  (config) => {
+    const token = store.getters.token
+    if (token) config.headers.Authorization = 'Bearer ' + token
+    return config
   },
-  function (error) {
-    // 对请求错误做些什么
+  (error) => {
     return Promise.reject(error)
   }
 )
 
-// 添加响应拦截器
-instance.interceptors.response.use(
-  function (response) {
-    const { data, meta } = response.data
-    if (meta.status === 200 || meta.status === 201) {
-      return data
-    } else {
-      ElMessage.error(meta.msg)
-      return Promise.reject(new Error(meta.msg))
+// 响应拦截器
+service.interceptors.response.use(
+  (response) => {
+    console.log(response, 'response')
+    const authorization = response.headers.authorization
+    if (authorization) {
+      store.commit('user/setToken', authorization)
+    }
+    if (response.data.code === 200) {
+      return response.data.data
     }
   },
-  function (error) {
-    error.response && ElMessage.error(error.response.data)
-    return Promise.reject(new Error(error.response.data))
+  (error) => {
+    return Promise.reject(error)
   }
 )
 
-export default instance
+// 统一传参方式
+const request = (options) => {
+  if (options.method.toLowerCase() === 'get') {
+    options.params = options.data || {}
+  }
+  return service(options)
+}
+
+export default request

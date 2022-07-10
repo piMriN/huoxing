@@ -36,40 +36,26 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useStore } from 'vuex'
-
+import { useRouter } from 'vue-router'
 const store = useStore()
+const router = useRouter()
 
-const ruleFormRef = ref(null)
+const ruleFormRef = ref('')
+const rules = {
+  userName: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  userPwd: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+}
 const ruleForm = reactive({
   userName: '',
   userPwd: ''
 })
 
-const rules = {
-  userName: [
-    {
-      required: true,
-      message: '请输入用户名',
-      trigger: 'blur'
-    }
-  ],
-  userPwd: [
-    {
-      required: true,
-      message: '请输入密码',
-      trigger: 'blur'
-    }
-  ]
-}
-
 const handleLoginSubmit = () => {
   ruleFormRef.value.validate(async (valid) => {
-    if (valid) {
-      store.dispatch('user/UserApi')
-    } else {
-      console.log('error submit!!')
-      return false
-    }
+    if (!valid) return
+    await store.dispatch('user/login', ruleForm)
+    store.dispatch('user/getPermissionlist')
+    router.push('/')
   })
 }
 </script>
